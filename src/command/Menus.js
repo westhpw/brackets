@@ -257,6 +257,8 @@ define(function (require, exports, module) {
             }
         }
 
+        brackets.app.addMenuItem(this.id, id, name, name === "---" ? "" : command.getID(), keyBindings, position, relativeID);
+        
         if (name === "---") {
             $menuItem = $("<li><hr class='divider'></li>");
         } else {
@@ -426,6 +428,8 @@ define(function (require, exports, module) {
         if (menuMap[id]) {
             throw new Error("Menu added with same name and id of existing Menu: " + id);
         }
+        
+        brackets.app.addMenu(id, name, position, relativeID);
 
         menu = new Menu(id);
         menuMap[id] = menu;
