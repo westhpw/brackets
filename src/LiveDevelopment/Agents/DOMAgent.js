@@ -195,13 +195,8 @@ define(function DOMAgent(require, exports, module) {
             _idToNode = {};
             _pendingRequests = 0;
             exports.root = new DOMNode(exports, res.root);
+            exports.url = _cleanURL(res.root.documentURL);
         });
-    }
-
-    // WebInspector Event: Page.frameNavigated
-    function _onFrameNavigated(event, res) {
-        // res = {frame}
-        exports.url = _cleanURL(res.frame.url);
     }
 
      // WebInspector Event: DOM.documentUpdated
@@ -288,7 +283,6 @@ define(function DOMAgent(require, exports, module) {
     function load() {
         _load = new $.Deferred();
         $(Inspector.Page)
-            .on("frameNavigated.DOMAgent", _onFrameNavigated)
             .on("loadEventFired.DOMAgent", _onLoadEventFired);
         $(Inspector.DOM)
             .on("documentUpdated.DOMAgent", _onDocumentUpdated)
