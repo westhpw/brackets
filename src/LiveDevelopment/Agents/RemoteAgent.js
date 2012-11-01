@@ -45,6 +45,10 @@ define(function RemoteAgent(require, exports, module) {
     // WebInspector Event: Page.loadEventFired
     function _onLoadEventFired(event, res) {
         // res = {timestamp}
+        _injectRemoteFunctions();
+    }
+
+    function _injectRemoteFunctions() {
         var request = new XMLHttpRequest();
         request.open("GET", "LiveDevelopment/Agents/RemoteFunctions.js");
         request.onload = function onLoad() {
@@ -108,6 +112,7 @@ define(function RemoteAgent(require, exports, module) {
         _load = new $.Deferred();
         $(Inspector.Page).on("loadEventFired.RemoteAgent", _onLoadEventFired);
         $(Inspector.DOM).on("attributeModified.RemoteAgent", _onAttributeModified);
+        _injectRemoteFunctions();
         return _load.promise();
     }
 

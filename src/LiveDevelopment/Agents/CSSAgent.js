@@ -52,6 +52,10 @@ define(function CSSAgent(require, exports, module) {
     // WebInspector Event: Page.loadEventFired
     function _onLoadEventFired(event, res) {
         // res = {timestamp}
+        _getAllStyleSheets();
+    }
+
+    function _getAllStyleSheets() {
         _urlToStyle = {};
         Inspector.CSS.getAllStyleSheets(function onGetAllStyleSheets(res) {
             var i, header;
@@ -103,6 +107,7 @@ define(function CSSAgent(require, exports, module) {
     function load() {
         _load = new $.Deferred();
         $(Inspector.Page).on("loadEventFired.CSSAgent", _onLoadEventFired);
+        _getAllStyleSheets();
         return _load.promise();
     }
 

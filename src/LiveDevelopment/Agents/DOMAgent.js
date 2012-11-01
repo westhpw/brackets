@@ -189,13 +189,24 @@ define(function DOMAgent(require, exports, module) {
     // WebInspector Event: Page.loadEventFired
     function _onLoadEventFired(event, res) {
         // res = {timestamp}
+        _getDocument();
+    }
+
+    function _getDocument() {
+        // Get the document
+        // Might immediately be followed by documentUpdated (see _onDocumentUpdated)
         Inspector.DOM.getDocument(function onGetDocument(res) {
-            $exports.triggerHandler("getDocument", res);
             // res = {root}
+            $exports.triggerHandler("getDocument", res);
+            
+            exports.url = _cleanURL(res.root.documentURL);
+            
             _idToNode = {};
             _pendingRequests = 0;
             exports.root = new DOMNode(exports, res.root);
-            exports.url = _cleanURL(res.root.documentURL);
+            if (_pendingRequests === 0) {
+                _onFinishedLoadingDOM();
+            }
         });
     }
 
@@ -291,7 +302,8 @@ define(function DOMAgent(require, exports, module) {
             .on("childNodeInserted.DOMAgent", _onChildNodeInserted)
             .on("childNodeRemoved.DOMAgent", _onChildNodeRemoved);
         Inspector.Page.enable();
-        Inspector.Page.reload();
+        // Inspector.Page.reload();
+        _getDocument();
         return _load.promise();
     }
 
