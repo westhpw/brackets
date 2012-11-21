@@ -296,22 +296,26 @@ define(function Inspector(require, exports, module) {
      * -> Inspector.domain.command()
      */
     function init(theConfig) {
+        var result = new $.Deferred();
+        
         exports.config = theConfig;
-        var request = new XMLHttpRequest();
-        request.open("GET", "LiveDevelopment/Inspector/Inspector.json");
-        request.onload = function onLoad() {
-            var InspectorJSON = JSON.parse(request.response);
-            var i, j, domain, domainDef, command;
-            for (i in InspectorJSON.domains) {
-                domain = InspectorJSON.domains[i];
-                exports[domain.domain] = {};
-                for (j in domain.commands) {
-                    command = domain.commands[j];
-                    exports[domain.domain][command.name] = _send.bind(undefined, domain.domain + "." + command.name, command.parameters);
+        $.getJSON("LiveDevelopment/Inspector/Inspector.json")
+            .done(function onLoad(InspectorJSON) {
+                console.log(InspectorJSON);
+                var i, j, domain, domainDef, command;
+                for (i in InspectorJSON.domains) {
+                    domain = InspectorJSON.domains[i];
+                    exports[domain.domain] = {};
+                    for (j in domain.commands) {
+                        command = domain.commands[j];
+                        exports[domain.domain][command.name] = _send.bind(undefined, domain.domain + "." + command.name, command.parameters);
+                    }
                 }
-            }
-        };
-        request.send(null);
+                result.resolve();
+            })
+            .fail(result.reject);
+
+        return result.promise();
     }
 
     // Export public functions
