@@ -44,6 +44,9 @@ define(function (require, exports, module) {
         function defineLanguage(definition) {
             var def = $.extend({}, definition);
             
+            var id = def.id;
+            delete def.id;
+            
             if (def.blockComment) {
                 def.blockComment = [def.blockComment.prefix, def.blockComment.suffix];
             }
@@ -52,7 +55,7 @@ define(function (require, exports, module) {
                 def.lineComment = def.lineComment.prefix;
             }
             
-            return LanguageManager.defineLanguage(definition.id, def);
+            return LanguageManager.defineLanguage(id, def);
         }
         
         function validateLanguage(expected, actual) {
@@ -282,6 +285,70 @@ define(function (require, exports, module) {
                 });
             });
             
+            describe("when extending a language", function () {
+                var id          = "fakescript",
+                    name        = "FakeScript",
+                    extension   = "fake",
+                    parent      = LanguageManager.getLanguage("javascript"),
+                    child,
+                    promise,
+                    didFail,
+                    def,
+                    language;
+                
+            
+                it("should still require a name", function () {
+                    expect(LanguageManager.getLanguage(id)).toBe(undefined);
+                    expect(function () { defineLanguage({ id: id, parent: parent.getId() }); }).toThrow(new Error("name must be a string"));
+                });
+                
+                it("should allow a minimal definition when extending a language", function () {
+                    runs(function () {
+                        expect(LanguageManager.getLanguage(id)).toBe(undefined);
+                        promise = defineLanguage({ id: id, parent: parent.getId(), name: name });
+                        promise.done(function (language) {
+                            child = language;
+                        });
+                    });
+                    
+                    runs(function () {
+                        waitsForDone(promise, "Defining a language with a name should succeed");
+                    });
+                });
+                    
+                it("inherit only mode and comment syntax", function () {
+                    runs(function () {
+                        expect(child.hasAncestor(parent)).toBe(true);
+                        
+                        // Own
+                        expect(child.getId()).toBe(id);
+                        expect(child.getName()).toBe(name);
+                        expect(child.getFileExtensions()).toEqual([]);
+                        
+                        // Inherited
+                        expect(child.getMode()).toBe(parent.getMode());
+                        
+                        expect(child.hasLineCommentSyntax()).toBe(parent.hasLineCommentSyntax());
+                        expect(child.getLineCommentPrefix()).toBe(parent.getLineCommentPrefix());
+                        
+                        expect(child.hasBlockCommentSyntax()).toBe(parent.hasBlockCommentSyntax());
+                        expect(child.getBlockCommentPrefix()).toBe(parent.getBlockCommentPrefix());
+                        expect(child.getBlockCommentSuffix()).toBe(parent.getBlockCommentSuffix());
+                    });
+                });
+                
+                it("should take over file extension from parent", function () {
+                    parent.addFileExtension(extension);
+                    expect(child.getFileExtensions()).not.toContain(extension);
+                    expect(parent.getFileExtensions()).toContain(extension);
+                    expect(LanguageManager.getLanguageForFileExtension(extension).getId()).toBe(parent.getId());
+                    
+                    child.addFileExtension(extension);
+                    expect(child.getFileExtensions()).toContain(extension);
+                    expect(parent.getFileExtensions()).not.toContain(extension);
+                    expect(LanguageManager.getLanguageForFileExtension(extension).getId()).toBe(child.getId());
+                });
+            });
         });
         
         describe("rename file extension", function () {
@@ -351,7 +418,9 @@ define(function (require, exports, module) {
                 // cleanup
                 doc.releaseRef();
             });
+        });
             
+        describe("adding or modifying languages", function () {
             it("should update the document's language when a language is added", function () {
                 var unknown,
                     doc,
